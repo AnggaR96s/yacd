@@ -52,11 +52,24 @@ function APIConfig({ dispatch }) {
   }, []);
 
   const onConfirm = useCallback(() => {
-    verify({ baseURL, secret }).then((ret) => {
+    let unconfirmedBaseURL = baseURL;
+    if (unconfirmedBaseURL) {
+      const prefix = baseURL.substring(0, 7);
+      if (prefix.includes(':/')) {
+        // same logic in verify function
+        if (prefix !== 'http://' && prefix !== 'https:/') {
+          return [1, 'Must starts with http:// or https://'];
+        }
+      } else if (window.location.protocol) {
+        // only append scheme when prefix does not include scheme and current location includes scheme
+        unconfirmedBaseURL = `${window.location.protocol}//${unconfirmedBaseURL}`;
+      }
+    }
+    verify({ baseURL: unconfirmedBaseURL, secret }).then((ret) => {
       if (ret[0] !== Ok) {
         setErrMsg(ret[1]);
       } else {
-        dispatch(addClashAPIConfig({ baseURL, secret, metaLabel }));
+        dispatch(addClashAPIConfig({ baseURL: unconfirmedBaseURL, secret }));
       }
     });
   }, [baseURL, secret, metaLabel, dispatch]);
