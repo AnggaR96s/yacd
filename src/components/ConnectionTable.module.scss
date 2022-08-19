@@ -1,7 +1,7 @@
 .tr {
   display: grid;
   /* grid-template-columns: repeat(11, minmax(max-content, 1fr)); */
-  grid-template-columns: repeat(11, minmax(max-content, auto));
+  grid-template-columns: repeat(12, minmax(max-content, auto));
 }
 
 .th {
@@ -10,7 +10,7 @@
   background: var(--color-background);
   position: sticky;
   top: 0;
-  font-size: 0.8em;
+  font-size: 0.9em;
   text-align: center;
   user-select: none;
 
@@ -26,7 +26,10 @@
 .td {
   padding: 8px 13px;
   font-size: 0.9em;
-
+  cursor:default;
+  &:hover {
+    color: var(--color-text-highlight);
+  }
   font-family: var(--font-normal);
 }
 
