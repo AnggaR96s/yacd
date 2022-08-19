@@ -1,66 +1,33 @@
+name: Deploy
+
 on: [push]
-name: Deploy workflow
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
+
 jobs:
-  install:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        node-version: [16.x]
-
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Checkout Dashboard code
+        uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - name: Setup Nodejs
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v3
+          node-version: '17.x'
+          cache: pnpm
+      - name: Install package and build
+        run: |
+          pnpm install
+          pnpm build
+      - name: Deploy
+        uses: crazy-max/ghaction-github-pages@v2
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.2.2
-        with:
-          version: 7
-          run_install: true
-
-      - name: Lint
-        run: pnpm lint
-      - name: Build
-        run: pnpm build
-
-      - name: Create Release
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
-        id: create_release
-        uses: actions/create-release@v1
+          target_branch: gh-pages
+          build_dir: public
+          fqdn: yacd.metacubex.one
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: true
-          prerelease: false
-      - name: Create Tar Ball
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
-        run: tar cJf yacd.tar.xz public
-      - name: Upload Release Asset
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./yacd.tar.xz
-          asset_name: yacd.tar.xz
-          asset_content_type: application/x-gzip
 
       - name: Push to gh-pages
         if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.event.ref == 'refs/heads/publish')
@@ -78,77 +45,6 @@ jobs:
           git status
           git commit -m "Push to gh-pages"
           git push -f https://$GITHUB_ACTOR:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:$BRANCH
-
-      - name: Send Notification
-        uses: haishanh/actions-telegram-notification@v1
-        if: ${{ always() }}
-        with:
-          notification-token: ${{ secrets.TG_NOTIFICATION_TOKEN }}
-          job-status: ${{ job.status }}
-
-  docker:
-    needs: install
-    runs-on: ubuntu-20.04
-    if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || startsWith(github.event.ref, 'refs/heads/v0.') || github.event.ref == 'refs/heads/master' || github.event.ref == 'refs/heads/test')
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Docker meta
-        id: docker_meta
-        uses: docker/metadata-action@v4
-        with:
-          images: haishanh/yacd
-
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v1.2.0
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          version: latest
-
-      - name: Builder instance name
-        run: echo ${{ steps.buildx.outputs.name }}
-      - name: Available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ github.actor }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        id: docker_build
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
-          push: true
-          tags: ${{ steps.docker_meta.outputs.tags }},ghcr.io/${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha
-
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
 
       - name: Send Notification
         uses: haishanh/actions-telegram-notification@v1
