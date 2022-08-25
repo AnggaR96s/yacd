@@ -1,4 +1,11 @@
-import { ClashGeneralConfig, DispatchFn, GetStateFn, State, StateConfigs } from 'src/store/types';
+import {
+  ClashGeneralConfig,
+  DispatchFn,
+  GetStateFn,
+  State,
+  StateConfigs,
+  TunPartial,
+} from 'src/store/types';
 import { ClashAPIConfig } from 'src/types';
 
 import * as configsAPI from '../api/configs';
@@ -53,9 +60,11 @@ function markHaveFetchedConfig() {
   };
 }
 
+type generalConfig = Omit<ClashGeneralConfig, 'tun'>
+
 export function updateConfigs(
   apiConfig: ClashAPIConfig,
-  partialConfg: Partial<ClashGeneralConfig>
+  partialConfg: TunPartial<ClashGeneralConfig>
 ) {
   return async (dispatch: DispatchFn) => {
     configsAPI
@@ -78,8 +87,77 @@ export function updateConfigs(
       });
 
     dispatch('storeConfigsOptimisticUpdateConfigs', (s) => {
-      s.configs.configs = { ...s.configs.configs, ...partialConfg };
+      s.configs.configs = { ...s.configs.configs, ...partialConfg } as generalConfig;
     });
+  };
+}
+
+export function reloadConfigFile(apiConfig: ClashAPIConfig) {
+  return async (dispatch: DispatchFn) => {
+    configsAPI
+        .reloadConfigFile(apiConfig)
+        .then(
+            (res) => {
+              if (res.ok === false) {
+                // eslint-disable-next-line no-console
+                console.log('Error reload config file', res.statusText);
+              }
+            },
+            (err) => {
+              // eslint-disable-next-line no-console
+              console.log('Error reload config file', err);
+              throw err;
+            }
+        )
+        .then(() => {
+          dispatch(fetchConfigs(apiConfig));
+        });
+  };
+}
+
+export function updateGeoDatabasesFile(apiConfig: ClashAPIConfig) {
+  return async (dispatch: DispatchFn) => {
+    configsAPI
+        .updateGeoDatabasesFile(apiConfig)
+        .then(
+            (res) => {
+              if (res.ok === false) {
+                // eslint-disable-next-line no-console
+                console.log('Error update geo databases file', res.statusText);
+              }
+            },
+            (err) => {
+              // eslint-disable-next-line no-console
+              console.log('Error update geo databases file', err);
+              throw err;
+            }
+        )
+        .then(() => {
+          dispatch(fetchConfigs(apiConfig));
+        });
+  };
+}
+
+export function flushFakeIPPool(apiConfig: ClashAPIConfig) {
+  return async (dispatch: DispatchFn) => {
+    configsAPI
+        .flushFakeIPPool(apiConfig)
+        .then(
+            (res) => {
+              if (res.ok === false) {
+                // eslint-disable-next-line no-console
+                console.log('Error flush FakeIP pool', res.statusText);
+              }
+            },
+            (err) => {
+              // eslint-disable-next-line no-console
+              console.log('Error flush FakeIP pool', err);
+              throw err;
+            }
+        )
+        .then(() => {
+          dispatch(fetchConfigs(apiConfig));
+        });
   };
 }
 
@@ -87,10 +165,21 @@ export const initialState: StateConfigs = {
   configs: {
     port: 7890,
     'socks-port': 7891,
+    'mixed-port': 0,
     'redir-port': 0,
+    'tproxy-port': 0,
+    'mitm-port': 0,
     'allow-lan': false,
-    mode: 'Rule',
+    mode: 'rule',
     'log-level': 'uninit',
+    sniffing: false,
+    tun: {
+      enable: false,
+      device: '',
+      stack: '',
+      'dns-hijack': [],
+      'auto-route': false,
+    },
   },
   haveFetchedConfig: false,
 };
