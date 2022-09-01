@@ -40,12 +40,14 @@ type FormattedConn = {
   rule: string;
   destinationPort: string;
   destinationIP: string;
+  remoteDestination: string;
   sourceIP: string;
   sourcePort: string;
   source: string;
   host: string;
   type: string;
   network: string;
+  process?: string;
   downloadSpeedCurr?: number;
   uploadSpeedCurr?: number;
 };
@@ -67,6 +69,7 @@ function filterConns(conns: FormattedConn[], keyword: string) {
           conn.rule,
           conn.type,
           conn.network,
+          conn.process,
         ].some((field) => hasSubstring(field, keyword))
       );
 }
@@ -77,7 +80,17 @@ function formatConnectionDataItem(
   now: number
 ): FormattedConn {
   const { id, metadata, upload, download, start, chains, rule, rulePayload } = i;
-  const { host, destinationPort, destinationIP, network, type, sourceIP, sourcePort } = metadata;
+  const {
+    host,
+    destinationPort,
+    destinationIP,
+    remoteDestination,
+    network,
+    type,
+    sourceIP,
+    sourcePort,
+    process,
+  } = metadata;
   // host could be an empty string if it's direct IP connection
   let host2 = host;
   if (host2 === '') host2 = destinationIP;
@@ -88,13 +101,15 @@ function formatConnectionDataItem(
     download,
     start: now - new Date(start).valueOf(),
     chains: chains.reverse().join(' / '),
-    rule: !rulePayload ? rule : `${rule}(${rulePayload})`,
+    rule: !rulePayload ? rule : `${rule} :: ${rulePayload}`,
     ...metadata,
     host: `${host2}:${destinationPort}`,
     type: `${type}(${network})`,
     source: `${sourceIP}:${sourcePort}`,
     downloadSpeedCurr: download - (prev ? prev.download : 0),
     uploadSpeedCurr: upload - (prev ? prev.upload : 0),
+    process: process? process : '-',
+    destinationIP: remoteDestination || destinationIP|| host,
   };
   return ret;
 }
@@ -109,7 +124,7 @@ function renderTableOrPlaceholder(conns: FormattedConn[]) {
   );
 }
 
-function connQty({ qty }) {
+function ConnQty({ qty }) {
   return qty < 100 ? '' + qty : '99+';
 }
 
@@ -179,11 +194,17 @@ function Conn({ apiConfig }) {
           <TabList>
             <Tab>
               <span>{t('Active')}</span>
-              <span className={s.connQty}>{connQty({ qty: filteredConns.length })}</span>
+              <span className={s.connQty}>
+                {/* @ts-expect-error ts-migrate(2786) FIXME: 'ConnQty' cannot be used as a JSX component. */}
+                <ConnQty qty={filteredConns.length} />
+              </span>
             </Tab>
             <Tab>
               <span>{t('Closed')}</span>
-              <span className={s.connQty}>{connQty({ qty: filteredClosedConns.length })}</span>
+              <span className={s.connQty}>
+                {/* @ts-expect-error ts-migrate(2786) FIXME: 'ConnQty' cannot be used as a JSX component. */}
+                <ConnQty qty={filteredClosedConns.length} />
+              </span>
             </Tab>
           </TabList>
           <div className={s.inputWrapper}>
@@ -192,7 +213,7 @@ function Conn({ apiConfig }) {
               name="filter"
               autoComplete="off"
               className={s.input}
-              placeholder="Filter"
+              placeholder={t('Search')}
               onChange={(e) => setFilterKeyword(e.target.value)}
             />
           </div>
@@ -213,7 +234,7 @@ function Conn({ apiConfig }) {
                 text={isRefreshPaused ? t('Resume Refresh') : t('Pause Refresh')}
                 onClick={toggleIsRefreshPaused}
               >
-                <Action text="Close All Connections" onClick={openCloseAllModal}>
+                <Action text={t('close_all_connections')} onClick={openCloseAllModal}>
                   <IconClose size={10} />
                 </Action>
               </Fab>
