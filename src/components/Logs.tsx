@@ -64,8 +64,10 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
   return (
     <div>
       <ContentHeader title={t('Logs')} />
-      <LogSearch />
-      <div ref={refLogsContainer}>
+      <div className={s.search}>
+        <LogSearch />
+      </div>
+       <div ref={refLogsContainer}>
         {logs.length === 0 ? (
           <div className={s.logPlaceholder} style={{ height: containerHeight - paddingBottom*2 }}>
             <div className={s.logPlaceholderIcon}>
