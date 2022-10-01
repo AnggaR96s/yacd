@@ -23,7 +23,7 @@ const columns = [
   { Header: 'Rule', accessor: 'rule' },
   { Header: 'Time', accessor: 'start', sortDescFirst },
   { Header: 'Source', accessor: 'source' },
-  { Header: 'Destination Ip', accessor: 'destinationIP' },
+  { Header: 'Destination IP', accessor: 'destinationIP' },
   { Header: 'Type', accessor: 'type' },
 ];
 
