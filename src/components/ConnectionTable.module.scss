@@ -6,7 +6,7 @@
 
 .th {
   padding: 8px 10px;
-  height: 50px;
+  height: 40px;
   background: var(--color-background);
   position: sticky;
   top: 0;
@@ -24,7 +24,7 @@
 }
 
 .td {
-  padding: 8px 13px;
+  padding: 8px 10px;
   font-size: 0.7em;
   cursor:default;
   &:hover {
@@ -44,9 +44,9 @@
 
 .sortIconContainer {
   display: inline-flex;
-  margin-left: 10px;
-  width: 16px;
-  height: 16px;
+  margin-left: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .rotate180 {
