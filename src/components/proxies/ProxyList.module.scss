@@ -1,3 +1,4 @@
+
 .list {
   margin: 8px 0;
   display: flex;
@@ -9,7 +10,7 @@
   margin: 8px 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, 13px);
-  grid-gap: 10px;
+  grid-gap: 8px;
   place-items: center;
-  max-width: 900px;
+  max-width: 750px;
 }

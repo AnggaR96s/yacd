@@ -1,8 +1,8 @@
 .root,
 .section {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(345px, 1fr));
-  max-width: 900px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  max-width: 700px;
   gap: 5px;
   @media (--breakpoint-not-small) {
     gap: 15px;
@@ -24,7 +24,7 @@
 }
 
 .sep {
-  max-width: 900px;
+  max-width: 700px;
   padding: 0 15px;
   @media (--breakpoint-not-small) {
     padding: 0 40px;
@@ -35,5 +35,5 @@
 }
 
 .label {
-  padding: 11px 0;
+  padding: 10px 0;
 }
