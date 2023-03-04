@@ -25,7 +25,7 @@ jobs:
         with:
           target_branch: gh-pages
           build_dir: public
-          fqdn: yacd.angga.social
+          fqdn: yacd.nullbyte.my.id
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
